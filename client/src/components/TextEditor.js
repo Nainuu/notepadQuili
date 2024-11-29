@@ -2,6 +2,7 @@ import React from 'react'
 import Quill from 'quill'
 import "quill/dist/quill.snow.css"
 import { io } from 'socket.io-client'
+import { useParams } from 'react-router-dom'
 
 // adding options in the toolbar
 const toolbar_options = [
@@ -18,6 +19,7 @@ const toolbar_options = [
 
 
 export default function TextEditor() {
+  const {id: documentId} = useParams();
     const [socket , setSocket] = React.useState();
     const [quill , setQuill] = React.useState();
 
@@ -32,6 +34,19 @@ export default function TextEditor() {
     } , []);
 
 
+    // For getting documentId of the text editor and using it
+    React.useEffect(() => {
+      if (socket == null || quill == null) return
+
+      socket.once("load-document" , documents => {
+        quill.setContents(documents);
+        quill.enable();
+      });
+
+      socket.emit('get-document', documentId);
+    }, [quill, socket, documentId]);
+
+    // For running quill
     React.useEffect(() => {
         if (socket == null || quill == null) return
 
@@ -60,7 +75,7 @@ export default function TextEditor() {
           return () => {
             quill.off('text-change', handler)
           };
-    }, [quill,socket]);
+    }, [quill, socket, documentId]);
 
     // Quill is not directly compatible with the react hence we make a container name id of a div
     // and then we make a Quill object
@@ -78,6 +93,11 @@ export default function TextEditor() {
             theme: "snow" ,
             modules : {toolbar : toolbar_options} });
         
+
+        // This below section is with the documentid useEffect
+        q.disable();
+        q.setText('Loading....')
+
         setQuill(q);
 
     }, []);
