@@ -4,6 +4,8 @@ import "quill/dist/quill.snow.css"
 import { io } from 'socket.io-client'
 import { useParams } from 'react-router-dom'
 
+
+const SAVE_INTERVALS_MS = 2000;
 // adding options in the toolbar
 const toolbar_options = [
     [{ header : [1,2,3,4,5,6,false]} ],
@@ -33,6 +35,14 @@ export default function TextEditor() {
         }
     } , []);
 
+    // for Saving data in DB
+    React.useEffect(() => {
+      if (socket == null || quill == null) return
+
+      const interval = setInterval(() => {
+        socket.emit('save-document' , quill.getContents())
+      } , SAVE_INTERVALS_MS);
+    }, [quill, socket]);
 
     // For getting documentId of the text editor and using it
     React.useEffect(() => {
